@@ -1,0 +1,360 @@
+﻿<Window x:Class="DccController.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="DCC Train Controller" 
+        Height="800" Width="1200"
+        MinHeight="600" MinWidth="900"
+        Background="#1E1E2E">
+
+    <DockPanel>
+
+        <!-- Top Menu Bar -->
+        <Menu DockPanel.Dock="Top" Background="#2E2E3E" Foreground="White">
+            <MenuItem Header="File" Foreground="White">
+                <MenuItem Header="New Layout"/>
+                <MenuItem Header="Open Layout"/>
+                <MenuItem Header="Save Layout"/>
+                <Separator/>
+                <MenuItem Header="Exit"/>
+            </MenuItem>
+            <MenuItem Header="Locomotives" Foreground="White">
+                <MenuItem Header="Add Locomotive"/>
+                <MenuItem Header="Manage Roster"/>
+            </MenuItem>
+            <MenuItem Header="Help" Foreground="White">
+                <MenuItem Header="About"/>
+            </MenuItem>
+        </Menu>
+
+        <!-- Bottom Status Bar -->
+        <StatusBar DockPanel.Dock="Bottom" Background="#2E2E3E">
+            <StatusBarItem>
+                <TextBlock x:Name="StatusText" Text="Status: Ready" Foreground="White"/>
+            </StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <TextBlock Text="Track Power: OFF" Foreground="Red" 
+                           x:Name="PowerStatusText"/>
+            </StatusBarItem>
+        </StatusBar>
+
+        <!-- Main Content Area -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <!-- Left Panel - Locomotive Controls -->
+                <ColumnDefinition Width="250" MinWidth="200"/>
+                <!-- Splitter -->
+                <ColumnDefinition Width="5"/>
+                <!-- Centre - Track Layout Canvas -->
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left Control Panel -->
+            <Border Grid.Column="0" Background="#2E2E3E" Margin="5">
+                <StackPanel>
+                    <TextBlock Text="Locomotive Roster" 
+                               Foreground="White" 
+                               FontSize="14"
+                               FontWeight="Bold"
+                               Margin="10,10,10,5"/>
+                    <Separator Background="#555"/>
+
+                    <!-- Locomotive list will go here -->
+                    <ListBox x:Name="LocomotiveRoster"
+         Background="#1E1E2E"
+         Foreground="White"
+         Height="200"
+         Margin="5">
+                        <ListBox.ContextMenu>
+                            <ContextMenu Background="#2E2E3E">
+                                <MenuItem x:Name="EditLocoMenuItem"
+                      Header="✏ Edit Locomotive"
+                      Foreground="White"
+                      Background="#2E2E3E"
+                      Click="EditLocoMenuItem_Click"/>
+                                <Separator Background="#555"/>
+                                <MenuItem x:Name="DeleteLocoMenuItem"
+                      Header="🗑 Delete Locomotive"
+                      Foreground="#E74C3C"
+                      Background="#2E2E3E"
+                      Click="DeleteLocoMenuItem_Click"/>
+                            </ContextMenu>
+                        </ListBox.ContextMenu>
+                    </ListBox>
+
+                    <Separator Background="#555" Margin="0,5"/>
+
+                    <!-- Throttle Controls -->
+                    <TextBlock Text="Throttle" 
+                               Foreground="White"
+                               FontSize="14"
+                               FontWeight="Bold"
+                               Margin="10,5"/>
+
+                    <!-- Speed Slider -->
+                    <TextBlock Text="Speed:" Foreground="White" Margin="10,5,10,0"/>
+                    <Slider x:Name="SpeedSlider"
+                            Minimum="0" Maximum="128"
+                            Value="0"
+                            Margin="10,0,10,5"
+                            Foreground="White"/>
+                    <TextBlock x:Name="SpeedValueText"
+                               Text="Speed: 0"
+                               Foreground="White"
+                               HorizontalAlignment="Center"/>
+
+                    <!-- Direction Buttons -->
+                    <StackPanel Orientation="Horizontal" 
+                                HorizontalAlignment="Center"
+                                Margin="0,10">
+                        <Button Content="◄ REV" 
+                                x:Name="ReverseButton"
+                                Width="80" Height="35"
+                                Margin="5"
+                                Background="#E74C3C"
+                                Foreground="White"/>
+                        <Button Content="STOP" 
+                                x:Name="StopButton"
+                                Width="80" Height="35"
+                                Margin="5"
+                                Background="#E67E22"
+                                Foreground="White"/>
+                        <Button Content="FWD ►" 
+                                x:Name="ForwardButton"
+                                Width="80" Height="35"
+                                Margin="5"
+                                Background="#27AE60"
+                                Foreground="White"/>
+                    </StackPanel>
+
+                    <!-- Track Power Button -->
+                    <Button Content="TRACK POWER ON/OFF"
+                            x:Name="PowerButton"
+                            Height="40"
+                            Margin="10,10"
+                            Background="#8E44AD"
+                            Foreground="White"
+                            FontWeight="Bold"/>
+
+                    <Separator Background="#555" Margin="0,5"/>
+
+                    <!-- Locomotive Details Panel -->
+                    <TextBlock Text="Locomotive Details"
+                               Foreground="White"
+                               FontSize="14"
+                               FontWeight="Bold"
+                               Margin="10,5"/>
+
+                    <!-- Locomotive Photo -->
+                    <Border Background="#1E1E2E"
+                            Height="120"
+                            Margin="5"
+                            BorderBrush="#555"
+                            BorderThickness="1"
+                            CornerRadius="4">
+                        <Grid>
+                            <TextBlock x:Name="NoImageText"
+                                       Text="No Image"
+                                       Foreground="#555"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                            <Image x:Name="LocoDetailImage"
+                                   Stretch="Uniform"
+                                   Margin="5"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Locomotive Info -->
+                    <Grid Margin="10,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Name -->
+                        <TextBlock Grid.Row="0" Grid.Column="0"
+                                   Text="Name:"
+                                   Foreground="#AAA"
+                                   Margin="0,3,10,3"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1"
+                                   x:Name="DetailNameText"
+                                   Text="—"
+                                   Foreground="White"
+                                   Margin="0,3"
+                                   TextWrapping="Wrap"/>
+
+                        <!-- DCC Address -->
+                        <TextBlock Grid.Row="1" Grid.Column="0"
+                                   Text="Address:"
+                                   Foreground="#AAA"
+                                   Margin="0,3,10,3"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1"
+                                   x:Name="DetailAddressText"
+                                   Text="—"
+                                   Foreground="White"
+                                   Margin="0,3"/>
+
+                        <!-- Manufacturer -->
+                        <TextBlock Grid.Row="2" Grid.Column="0"
+                                   Text="Make:"
+                                   Foreground="#AAA"
+                                   Margin="0,3,10,3"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1"
+                                   x:Name="DetailManufacturerText"
+                                   Text="—"
+                                   Foreground="White"
+                                   Margin="0,3"
+                                   TextWrapping="Wrap"/>
+
+                        <!-- Class -->
+                        <TextBlock Grid.Row="3" Grid.Column="0"
+                                   Text="Class:"
+                                   Foreground="#AAA"
+                                   Margin="0,3,10,3"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1"
+                                   x:Name="DetailClassText"
+                                   Text="—"
+                                   Foreground="White"
+                                   Margin="0,3"
+                                   TextWrapping="Wrap"/>
+
+                        <!-- Notes -->
+                        <TextBlock Grid.Row="4" Grid.Column="0"
+                                   Text="Notes:"
+                                   Foreground="#AAA"
+                                   Margin="0,3,10,3"/>
+                        <TextBlock Grid.Row="4" Grid.Column="1"
+                                   x:Name="DetailNotesText"
+                                   Text="—"
+                                   Foreground="White"
+                                   Margin="0,3"
+                                   TextWrapping="Wrap"/>
+                    </Grid>
+
+                </StackPanel>
+            </Border>
+
+            <!-- Grid Splitter -->
+            <GridSplitter Grid.Column="1" 
+                          Width="5" 
+                          HorizontalAlignment="Stretch"
+                          Background="#555"/>
+
+            <!-- Track Layout Canvas Area -->
+            <Border Grid.Column="2" Background="#1E1E2E" Margin="5">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Canvas Toolbar -->
+                    <Border Grid.Row="0" Background="#2E2E3E" Padding="5">
+                        <StackPanel Orientation="Horizontal">
+
+                            <!-- Zoom Controls -->
+                            <TextBlock Text="Zoom:" 
+                                       Foreground="White"
+                                       VerticalAlignment="Center"
+                                       Margin="5,0"/>
+                            <Button x:Name="ZoomOutButton"
+                                    Content="🔍−"
+                                    Width="35" Height="28"
+                                    Margin="2,0"
+                                    Background="#3E3E5E"
+                                    Foreground="White"
+                                    ToolTip="Zoom Out"/>
+                            <TextBlock x:Name="ZoomLevelText"
+                                       Text="100%"
+                                       Foreground="White"
+                                       VerticalAlignment="Center"
+                                       Width="45"
+                                       TextAlignment="Center"/>
+                            <Button x:Name="ZoomInButton"
+                                    Content="🔍+"
+                                    Width="35" Height="28"
+                                    Margin="2,0"
+                                    Background="#3E3E5E"
+                                    Foreground="White"
+                                    ToolTip="Zoom In"/>
+                            <Button x:Name="ZoomResetButton"
+                                    Content="Reset"
+                                    Width="50" Height="28"
+                                    Margin="5,0"
+                                    Background="#3E3E5E"
+                                    Foreground="White"
+                                    ToolTip="Reset Zoom"/>
+
+                            <Separator Style="{StaticResource 
+                                {x:Static ToolBar.SeparatorStyleKey}}"
+                                       Margin="5,0"/>
+
+                            <!-- Overlay Toggles -->
+                            <TextBlock Text="Show:" 
+                                       Foreground="White"
+                                       VerticalAlignment="Center"
+                                       Margin="5,0"/>
+                            <CheckBox x:Name="ShowEndPointsCheckBox"
+                                      Content="Start/End Points"
+                                      Foreground="White"
+                                      IsChecked="True"
+                                      VerticalAlignment="Center"
+                                      Margin="5,0"/>
+                            <CheckBox x:Name="ShowRefOverlayCheckBox"
+                                      Content="Reference Codes"
+                                      Foreground="White"
+                                      IsChecked="False"
+                                      VerticalAlignment="Center"
+                                      Margin="10,0"/>
+
+                            <!-- Manufacturer Selector -->
+                            <TextBlock Text="Mfr:" 
+                                       Foreground="White"
+                                       VerticalAlignment="Center"
+                                       Margin="10,0,5,0"/>
+                            <ComboBox x:Name="ManufacturerOverlayComboBox"
+                                      Width="90"
+                                      Height="28"
+                                      Background="#3E3E5E"
+                                      Foreground="White">
+                                <ComboBoxItem Content="Hornby" 
+                                              IsSelected="True"/>
+                                <ComboBoxItem Content="Peco"/>
+                                <ComboBoxItem Content="Bachmann"/>
+                            </ComboBox>
+
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Canvas with pan support -->
+                    <ScrollViewer Grid.Row="1"
+                                  x:Name="TrackScrollViewer"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Auto">
+                        <Canvas x:Name="TrackCanvasContainer"
+                                Background="#1E1E2E">
+                            <Canvas x:Name="TrackCanvas"
+                                    Background="#1E1E2E"
+                                    Width="5000"
+                                    Height="4000">
+                                <Canvas.RenderTransform>
+                                    <ScaleTransform x:Name="CanvasScale"
+                                                    ScaleX="1" ScaleY="1"/>
+                                </Canvas.RenderTransform>
+                            </Canvas>
+                        </Canvas>
+                    </ScrollViewer>
+
+                </Grid>
+            </Border>
+
+        </Grid>
+    </DockPanel>
+</Window>
