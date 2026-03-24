@@ -1,4 +1,6 @@
-﻿using DccController.Models;
+﻿using Microsoft.Win32;
+using System.IO;
+using DccController.Models;
 using DccController.Models.Track;
 using DccController.Services;
 using DccController.Views;
@@ -38,6 +40,10 @@ namespace DccController
 
         // WASD pan speed in pixels per key press
         private const double KeyPanStep = 40.0;
+
+        // Layout Save Service
+        private readonly LayoutSaveService _layoutSaveService =
+            new LayoutSaveService();
 
         public MainWindow()
         {
@@ -79,6 +85,15 @@ namespace DccController
                 {
                     switch (menuItem.Header.ToString())
                     {
+                        case "New Layout":
+                            menuItem.Click += NewLayout_Click;
+                            break;
+                        case "Open Layout":
+                            menuItem.Click += OpenLayout_Click;
+                            break;
+                        case "Save Layout":
+                            menuItem.Click += SaveLayout_Click;
+                            break;
                         case "Exit":
                             menuItem.Click += (s, e) => Close();
                             break;
@@ -138,6 +153,114 @@ namespace DccController
                 MessageBox.Show($"Could not load layout:\n{ex.Message}",
                     "Layout Error", MessageBoxButton.OK,
                     MessageBoxImage.Warning);
+            }
+        }
+
+        // ── New Layout ────────────────────────────────────────────────
+        private void NewLayout_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show(
+                "Start a new layout? Any unsaved changes will be lost.",
+                "New Layout",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                _trackLayout = new TrackLayout { Name = "New Layout" };
+                _trackRenderer.RenderLayout(TrackCanvas, _trackLayout);
+                UpdateStatus("New layout created");
+                ScrollToCentre();
+            }
+        }
+
+        // ── Save Layout ───────────────────────────────────────────────
+        private void SaveLayout_Click(object sender, RoutedEventArgs e)
+        {
+            if (_trackLayout == null)
+            {
+                MessageBox.Show("No layout to save.",
+                    "Save Layout", MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                return;
+            }
+
+            var dialog = new SaveFileDialog
+            {
+                Title = "Save Layout",
+                Filter = "DCC Layout Files (*.dcclayout)|*.dcclayout|All Files (*.*)|*.*",
+                DefaultExt = "dcclayout",
+                InitialDirectory = Environment.GetFolderPath(
+                    Environment.SpecialFolder.MyDocuments)
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    _layoutSaveService.SaveLayout(
+                        dialog.FileName,
+                        _trackLayout,
+                        _locomotives);
+
+                    UpdateStatus($"Layout saved: " +
+                        $"{Path.GetFileName(dialog.FileName)}");
+
+                    MessageBox.Show("Layout saved successfully!",
+                        "Saved", MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Could not save layout:\n{ex.Message}",
+                        "Save Error", MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                }
+            }
+        }
+
+        // ── Open Layout ───────────────────────────────────────────────
+        private void OpenLayout_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OpenFileDialog
+            {
+                Title = "Open Layout",
+                Filter = "DCC Layout Files (*.dcclayout)|*.dcclayout|All Files (*.*)|*.*",
+                InitialDirectory = Environment.GetFolderPath(
+                    Environment.SpecialFolder.MyDocuments)
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    var (layout, locomotives) =
+                        _layoutSaveService.LoadLayout(dialog.FileName);
+
+                    _trackLayout = layout;
+                    _trackRenderer.RenderLayout(TrackCanvas, _trackLayout);
+
+                    // Merge loaded locomotives into roster
+                    foreach (var loco in locomotives)
+                    {
+                        if (!_locomotives.Any(l => l.Id == loco.Id))
+                        {
+                            _locomotives.Add(loco);
+                        }
+                    }
+
+                    RefreshRosterDisplay();
+                    ScrollToCentre();
+
+                    UpdateStatus($"Layout loaded: {layout.Name} — " +
+                        $"{layout.Pieces.Count} piece(s)");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Could not open layout:\n{ex.Message}",
+                        "Load Error", MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                }
             }
         }
 
